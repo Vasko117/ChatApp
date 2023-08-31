@@ -156,9 +156,8 @@ code {
   border-radius: 10px;
   justify-content: center;
   border: 1px solid gray;
-  width: 65%;
-  height: 80%;
-  overflow: hidden;
+  width: 65vw;
+  height: 80vh;
 }
 .sidebar{
   display: inline-flex;
@@ -174,10 +173,9 @@ code {
 .chat{
   display: inline-flex;
   flex-direction: column;
-  flex-basis: 75%;
-  flex-grow: 0;
+  border-radius: 10px;
   background-color: #10c55f;
-
+  max-width: 60%;
 }
 .homepage{
   flex-basis: 75%;
