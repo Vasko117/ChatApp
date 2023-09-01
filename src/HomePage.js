@@ -16,7 +16,7 @@ function HomePage(props) {
     const [fileot, setFileot] = useState(null);
     const { curruser } = useContext(AuthContext);
     const [post, setPost] = useState([]);
-    const [dali, setDali] = useState(false);
+    const [likeStatus, setLikeStatus] = useState({});
     useEffect(() => {
         try {
             const unsub = onSnapshot(doc(db, "posts", "homepagepostovi"), (doc) => {
@@ -33,34 +33,32 @@ function HomePage(props) {
         const postRef = doc(db, "posts", "homepagepostovi");
 
         try {
-            if(!dali)
-            {
-                await updateDoc(postRef, {
-                    "postovi": post.map((postItem) =>
-                        postItem.uid === po.uid
-                            ? { ...postItem, count: (postItem.count || 0) + 1 }
-                            : postItem
-                    ),
-                });
-                setDali(true)
-            }
-            else {
-                await updateDoc(postRef, {
-                    "postovi": post.map((postItem) =>
-                        postItem.uid === po.uid
-                            ? { ...postItem, count: (postItem.count || 0) - 1 }
-                            : postItem
-                    ),
-                });
-                setDali(false)
+            // Toggle the like/unlike status for the specific post
+            const updatedLikeStatus = { ...likeStatus };
+            if (!updatedLikeStatus[po.uid]) {
+                // If it's not liked, mark as liked
+                updatedLikeStatus[po.uid] = true;
+            } else {
+                // If it's liked, mark as unliked
+                updatedLikeStatus[po.uid] = false;
             }
 
-            // Update the local state to reflect the new count
+            // Update the Firestore document
+            await updateDoc(postRef, {
+                "postovi": post.map((postItem) =>
+                    postItem.uid === po.uid
+                        ? { ...postItem, count: (postItem.count || 0) + (updatedLikeStatus[po.uid] ? 1 : -1) }
+                        : postItem
+                ),
+            });
+
+            // Update the local state to reflect the new like/unlike status
+            setLikeStatus(updatedLikeStatus);
 
         } catch (error) {
             console.error("Error updating likes:", error);
         }
-    };
+    }
     const handledelete= async (po)=>{
         await updateDoc(doc(db,"posts","homepagepostovi"), {
             postovi: arrayRemove(po)
@@ -157,9 +155,9 @@ function HomePage(props) {
                         {po.text}
                         {po.img && <img src={po.img} alt="Posted Image" className='postimage'/>}
                         <div className="postbutton">
-                            {!dali && <button onClick={()=>handlelikes(po)}>Like</button>}
-                            {dali && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={()=>handlelikes(po)}>Unlike</button>}
-                            <span>{po.count}</span>
+                            {!likeStatus[po.uid] && <button onClick={() => handlelikes(po)}>Like</button>}
+                            {likeStatus[po.uid] && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handlelikes(po)}>Unlike</button>}
+                            <span>Likes:{po.count}</span>
                             {po.senderId===curruser.uid && <button onClick={()=>handledelete(po)}>Delete</button>}
                         </div>
                     </div>
