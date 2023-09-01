@@ -179,6 +179,7 @@ code {
   border-bottom-left-radius: 7px;
   background-color: #10c55f;
   max-width: 65%;
+  width: 65%;
   border: 1px solid gray;
 }
 .homepage{
@@ -274,6 +275,9 @@ code {
 .fileinputhomepage{
   cursor: pointer;
   margin-top: 10px;
+}
+.usechatinfo{
+  padding: 5px;
 }
 .msg > .userchat{
   padding: 10px;
@@ -465,7 +469,7 @@ div.chatot.owner p{
   height: 90px;
   border: 1px solid gray;
 }
-.homepage button{
+.homepage2 button{
   border-radius: 10px;
   background-color: aqua;
   cursor: pointer;
@@ -524,4 +528,18 @@ div.chatot.owner p{
   flex-direction: row;
   gap: 10px;
 }
-
+.postbutton{
+  display: inline-block;
+  padding: 5px;
+}
+.postbutton button{
+  margin: 5px;
+}
+.postbutton button{
+  border-radius: 10px;
+  background-color: #00f7ff;
+  cursor: pointer;
+  width: 75px;
+  height: 30px;
+  margin-top: 12px;
+}

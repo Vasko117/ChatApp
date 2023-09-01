@@ -5,7 +5,7 @@ import Add1
 import Add2
     from "./image/Srce.png";
 import {AuthContext} from "./context/AuthContext";
-import {arrayUnion, doc, getDoc, onSnapshot, setDoc, Timestamp, updateDoc} from "firebase/firestore";
+import {arrayUnion, doc, getDoc, onSnapshot, setDoc, Timestamp, updateDoc,deleteField,arrayRemove } from "firebase/firestore";
 import {db, storage} from "./firebase";
 import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {v4 as uuid} from "uuid";
@@ -16,19 +16,56 @@ function HomePage(props) {
     const [fileot, setFileot] = useState(null);
     const { curruser } = useContext(AuthContext);
     const [post, setPost] = useState([]);
-    useEffect(()=>{
-        try{
-            const unsub=onSnapshot(doc(db,"posts","homepagepostovi"),(doc)=>{
-                setPost(doc.data().postovi)
-            })
-            return()=>{
-                unsub()
+    const [dali, setDali] = useState(false);
+    useEffect(() => {
+        try {
+            const unsub = onSnapshot(doc(db, "posts", "homepagepostovi"), (doc) => {
+                setPost(doc.data()?.postovi || []); 
+            });
+            return () => {
+                unsub();
+            };
+        } catch (err) {
+            console.log("Tuka e problemot");
+        }
+    }, []);
+    const handlelikes = async (po) => {
+        const postRef = doc(db, "posts", "homepagepostovi");
+
+        try {
+            if(!dali)
+            {
+                await updateDoc(postRef, {
+                    "postovi": post.map((postItem) =>
+                        postItem.uid === po.uid
+                            ? { ...postItem, count: (postItem.count || 0) + 1 }
+                            : postItem
+                    ),
+                });
+                setDali(true)
             }
+            else {
+                await updateDoc(postRef, {
+                    "postovi": post.map((postItem) =>
+                        postItem.uid === po.uid
+                            ? { ...postItem, count: (postItem.count || 0) - 1 }
+                            : postItem
+                    ),
+                });
+                setDali(false)
+            }
+
+            // Update the local state to reflect the new count
+
+        } catch (error) {
+            console.error("Error updating likes:", error);
         }
-        catch (err){
-            console.log("Tuka e problemot")
-        }
-    },[post])
+    };
+    const handledelete= async (po)=>{
+        await updateDoc(doc(db,"posts","homepagepostovi"), {
+            postovi: arrayRemove(po)
+        });
+    }
     const handlesubmit = async ()=>{
         if(text==='' && fileot===null)
         {
@@ -56,8 +93,10 @@ function HomePage(props) {
                         await updateDoc(doc(db, 'posts', "homepagepostovi"), {
                             postovi: arrayUnion({
                                 uid: uuid(),
+                                senderId:curruser.uid,
                                 displayName: curruser.displayName,
                                 text:text,
+                                count:0,
                                 img:downloadURL,
                                 photoURL: curruser.photoURL,
                                 date:Timestamp.now()
@@ -75,7 +114,9 @@ function HomePage(props) {
                 postovi: arrayUnion({
                     uid: uuid(),
                     displayName: curruser.displayName,
+                    senderId:curruser.uid,
                     text:text,
+                    count:0,
                     photoURL: curruser.photoURL,
                     date:Timestamp.now()
                 }),
@@ -115,7 +156,14 @@ function HomePage(props) {
                     <div className="postcontent">
                         {po.text}
                         {po.img && <img src={po.img} alt="Posted Image" className='postimage'/>}
+                        <div className="postbutton">
+                            {!dali && <button onClick={()=>handlelikes(po)}>Like</button>}
+                            {dali && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={()=>handlelikes(po)}>Unlike</button>}
+                            <span>{po.count}</span>
+                            {po.senderId===curruser.uid && <button onClick={()=>handledelete(po)}>Delete</button>}
+                        </div>
                     </div>
+
                 </div>
             ))}
         </div>
