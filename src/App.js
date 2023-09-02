@@ -6,6 +6,7 @@ import {AuthContext} from "../../untitled19/src/context/AuthContext";
 import HomePage from "./HomePage";
 import Sidebar from "./Sidebar";
 import Chats from "./Chats";
+import UserProfilePages from "./UserProfilePages";
 function App() {
   const{curruser}=useContext(AuthContext)
   return (
@@ -26,6 +27,13 @@ function App() {
                     <Sidebar/>
                   </div>
                 </div>:<Login/>}/>
+              <Route exact path="profile" element={curruser ?
+                  <div className='home'>
+                      <div className='container'>
+                          <UserProfilePages/>
+                          <Sidebar/>
+                      </div>
+                  </div>:<Login/>}/>
             <Route exact path="login" element={<Login/>}/>
             <Route exact path="register" element={<Register/>}/>
           </Routes>

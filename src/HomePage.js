@@ -16,11 +16,24 @@ function HomePage(props) {
     const [fileot, setFileot] = useState(null);
     const { curruser } = useContext(AuthContext);
     const [post, setPost] = useState([]);
+    const [profilepost, setProfilepost] = useState([]);
     const [likeStatus, setLikeStatus] = useState({});
     useEffect(() => {
         try {
+            const unsub = onSnapshot(doc(db, "profilepages", curruser.uid), (doc) => {
+                setProfilepost(doc.data()?.profileinfos || []);
+            });
+            return () => {
+                unsub();
+            };
+        } catch (err) {
+            console.log("Tuka e problemot");
+        }
+    }, []);
+    useEffect(() => {
+        try {
             const unsub = onSnapshot(doc(db, "posts", "homepagepostovi"), (doc) => {
-                setPost(doc.data()?.postovi || []); 
+                setPost(doc.data()?.postovi || []);
             });
             return () => {
                 unsub();
@@ -31,7 +44,7 @@ function HomePage(props) {
     }, []);
     const handlelikes = async (po) => {
         const postRef = doc(db, "posts", "homepagepostovi");
-
+        const postRef2 = doc(db, "profilepages", curruser.uid);
         try {
             // Toggle the like/unlike status for the specific post
             const updatedLikeStatus = { ...likeStatus };
@@ -51,6 +64,14 @@ function HomePage(props) {
                         : postItem
                 ),
             });
+            await updateDoc(postRef2, {
+                "profileinfos": profilepost.map((propostItem) =>
+                    propostItem.text === po.text
+                        ? { ...propostItem, count: (propostItem.count || 0) + (updatedLikeStatus[po.uid] ? 1 : -1) }
+                        : propostItem
+                ),
+            });
+
 
             // Update the local state to reflect the new like/unlike status
             setLikeStatus(updatedLikeStatus);
@@ -59,10 +80,30 @@ function HomePage(props) {
             console.error("Error updating likes:", error);
         }
     }
-    const handledelete= async (po)=>{
-        await updateDoc(doc(db,"posts","homepagepostovi"), {
-            postovi: arrayRemove(po)
-        });
+    const handledelete = async (po) => {
+        const postRef = doc(db, "posts", "homepagepostovi");
+        const profileRef = doc(db, "profilepages", curruser.uid);
+        let itemtoremove=null
+
+        try {
+            // Remove the element from both collections
+            await updateDoc(postRef, {
+                "postovi": arrayRemove(po)
+            });
+
+            profilepost.filter((pro)=>(
+                pro.text===po.text
+            )).map((pro)=>(
+                itemtoremove=pro
+                )
+            )
+            await updateDoc(profileRef, {
+                profileinfos: arrayRemove(itemtoremove)
+            })
+
+        } catch (error) {
+            console.error("Error deleting post:", error);
+        }
     }
     const handlesubmit = async ()=>{
         if(text==='' && fileot===null)
@@ -73,6 +114,11 @@ function HomePage(props) {
         if(!res.exists())
         {
             await setDoc(doc(db,"posts","homepagepostovi"),{postovi:[]})
+        }
+        const res2=await getDoc(doc(db,"profilepages",curruser.uid))
+        if(!res2.exists())
+        {
+            await setDoc(doc(db,"profilepages",curruser.uid),{profileinfos:[]})
         }
         if(fileot)
         {
@@ -95,6 +141,20 @@ function HomePage(props) {
                                 displayName: curruser.displayName,
                                 text:text,
                                 count:0,
+                                liked:false,
+                                img:downloadURL,
+                                photoURL: curruser.photoURL,
+                                date:Timestamp.now()
+                            }),
+                        });
+                        await updateDoc(doc(db, 'profilepages', curruser.uid), {
+                            profileinfos: arrayUnion({
+                                uid: uuid(),
+                                senderId:curruser.uid,
+                                displayName: curruser.displayName,
+                                text:text,
+                                count:0,
+                                liked:false,
                                 img:downloadURL,
                                 photoURL: curruser.photoURL,
                                 date:Timestamp.now()
@@ -114,6 +174,19 @@ function HomePage(props) {
                     displayName: curruser.displayName,
                     senderId:curruser.uid,
                     text:text,
+                    liked:false,
+                    count:0,
+                    photoURL: curruser.photoURL,
+                    date:Timestamp.now()
+                }),
+            });
+            await updateDoc(doc(db, 'profilepages', curruser.uid), {
+                profileinfos: arrayUnion({
+                    uid: uuid(),
+                    senderId:curruser.uid,
+                    displayName: curruser.displayName,
+                    text:text,
+                    liked:false,
                     count:0,
                     photoURL: curruser.photoURL,
                     date:Timestamp.now()
@@ -155,9 +228,9 @@ function HomePage(props) {
                         {po.text}
                         {po.img && <img src={po.img} alt="Posted Image" className='postimage'/>}
                         <div className="postbutton">
-                            {!likeStatus[po.uid] && <button onClick={() => handlelikes(po)}>Like</button>}
-                            {likeStatus[po.uid] && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handlelikes(po)}>Unlike</button>}
-                            <span>Likes:{po.count}</span>
+                            {!po.liked && <button onClick={() => handlelikes(po)}>Like</button>}
+                            {po.liked && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handlelikes(po)}>Unlike</button>}
+                            <span>Likes: {po.count}</span>
                             {po.senderId===curruser.uid && <button onClick={()=>handledelete(po)}>Delete</button>}
                         </div>
                     </div>
