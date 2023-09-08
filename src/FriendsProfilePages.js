@@ -15,17 +15,19 @@ import {
 } from "firebase/firestore";
 import {db} from "./firebase";
 import moment from "moment/moment";
+import {ChatContext} from "./context/ChatContext";
 
-function UserProfilePage(props) {
+function FriendsProfilePages(props) {
     const {curruser}=useContext(AuthContext)
     const [profilepost, setProfilepost] = useState([]);
     const [likesarray, setLikesarray] = useState([]);
-
+    const {data}= useContext(ChatContext);
     const [post, setPost] = useState([]);
+    const [likeStatus, setLikeStatus] = useState({});
     useEffect(() => {
         try {
             const updateLikes = async () => {
-                for (const postche of post) {
+                for (const postche of profilepost) {
                     try {
                         const res = await getDoc(doc(db, "likes", postche.uid + curruser.uid));
                         if (!res.exists()) {
@@ -77,7 +79,7 @@ function UserProfilePage(props) {
     }, []);
     useEffect(() => {
         try {
-            const unsub = onSnapshot(doc(db, "profilepages", curruser.uid), (doc) => {
+            const unsub = onSnapshot(doc(db, "profilepages", data.user.uid), (doc) => {
                 setProfilepost(doc.data()?.profileinfos || []);
             });
             return () => {
@@ -97,17 +99,18 @@ function UserProfilePage(props) {
 
         try {
             // Remove the element from both collections
-            await updateDoc(profileRef, {
-                "profileinfos": arrayRemove(po)
+            await updateDoc(postRef, {
+                "postovi": arrayRemove(po)
             });
-            post.filter((pro) => (
-                pro.uid === po.uid
+
+            profilepost.filter((pro) => (
+                pro.text === po.text
             )).map((pro) => (
                     itemtoremove = pro
                 )
             );
-            await updateDoc(postRef, {
-                postovi: arrayRemove(itemtoremove)
+            await updateDoc(profileRef, {
+                profileinfos: arrayRemove(itemtoremove)
             });
 
             const likesCollectionRef = collection(db, "likes");
@@ -131,7 +134,7 @@ function UserProfilePage(props) {
     const handleLikes = async (po) => {
         const postRef = doc(db, "posts", "homepagepostovi");
 
-        const postRef2 = doc(db, "profilepages", curruser.uid);
+        const postRef2 = doc(db, "profilepages", data.user.uid);
         try {
             const docRef = doc(db, 'likes', po.uid+curruser.uid); // Replace 'uniqot' with the document ID you want to fetch
             const docSnap = await getDoc(docRef);
@@ -172,8 +175,8 @@ function UserProfilePage(props) {
     return (
         <div className='userprofilepage'>
             <div className="background">
-                <img src={curruser.photoURL} className='deprofilephoto'/>
-                <span><b>{curruser.displayName}</b></span>
+                <img src={data.user.photoURL} className='deprofilephoto'/>
+                <span><b>{data.user.displayName}</b></span>
             </div>
             {profilepost && profilepost.sort((b,a)=>a.date-b.date).map((pro)=>(
                 <div className="borderhomepage2" key={pro.uid}>
@@ -210,4 +213,4 @@ function UserProfilePage(props) {
     );
 }
 
-export default UserProfilePage;
+export default FriendsProfilePages;

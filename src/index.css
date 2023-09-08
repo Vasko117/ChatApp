@@ -244,6 +244,7 @@ code {
   width: 50px;
   height: 50px;
   border-radius: 50%;
+  cursor: pointer;
   object-fit: cover;
 }
 .searchinput{

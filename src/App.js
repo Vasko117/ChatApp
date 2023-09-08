@@ -7,6 +7,7 @@ import HomePage from "./HomePage";
 import Sidebar from "./Sidebar";
 import Chats from "./Chats";
 import UserProfilePages from "./UserProfilePages";
+import FriendsProfilePages from "./FriendsProfilePages";
 function App() {
   const{curruser}=useContext(AuthContext)
   return (
@@ -31,6 +32,13 @@ function App() {
                   <div className='home'>
                       <div className='container'>
                           <UserProfilePages/>
+                          <Sidebar/>
+                      </div>
+                  </div>:<Login/>}/>
+              <Route exact path="profilefriends" element={curruser ?
+                  <div className='home'>
+                      <div className='container'>
+                          <FriendsProfilePages/>
                           <Sidebar/>
                       </div>
                   </div>:<Login/>}/>

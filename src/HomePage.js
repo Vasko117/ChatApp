@@ -22,9 +22,11 @@ import {db, storage} from "./firebase";
 import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {v4 as uuid} from "uuid";
 import moment from "moment";
+import {useNavigate} from "react-router-dom";
+import {ChatContext} from "./context/ChatContext";
 
 function HomePage(props) {
-    let books=[]
+    const nav=useNavigate()
     const [text, setText] = useState('');
     const [fileot, setFileot] = useState(null);
     const { curruser } = useContext(AuthContext);
@@ -32,6 +34,8 @@ function HomePage(props) {
     const [profilepost, setProfilepost] = useState([]);
     const [likesarray, setLikesarray] = useState([]);
     const [uniqot, setUniqot] = useState("");
+    const {dispatch}=useContext(ChatContext)
+    const [user, setUser] = useState(null);
     useEffect(() => {
         try {
             const updateLikes = async () => {
@@ -101,7 +105,6 @@ function HomePage(props) {
 
     const handleLikes = async (po) => {
         const postRef = doc(db, "posts", "homepagepostovi");
-
         const postRef2 = doc(db, "profilepages", curruser.uid);
         try {
             const docRef = doc(db, 'likes', po.uid+curruser.uid); // Replace 'uniqot' with the document ID you want to fetch
@@ -114,11 +117,7 @@ function HomePage(props) {
                         liked:!currentUserLikeStatus
                 });
                 currentUserLikeStatus = data.liked;
-                console.log('Updated Like Status:', currentUserLikeStatus);
-                console.log(likesarray)
-                console.log("po.uid:", po.uid);
                 let debook = likesarray.find((book) => book.id === po.uid && book.uid === curruser.uid);
-                console.log("debook:", debook);
                 await updateDoc(postRef, {
                     "postovi": post.map((postItem) =>
                         postItem.uid === po.uid
@@ -126,14 +125,34 @@ function HomePage(props) {
                             : postItem
                     ),
                 });
+                // const profileQuery = query(collection(db, 'profilepages'),where("profileinfos", "array-contains", { uid: po.uid }));
+                // const querySnapshot = await getDocs(profileQuery);
+                // if (querySnapshot.empty) {
+                //     console.log("No documents found matching the query.");
+                // }
+                // console.log("VLaga")
+                // querySnapshot.forEach(async (doc) => {
+                //     console.log("VLaga2")
+                //     const profileinfos = doc.data().profileinfos;
+                //     const postRef3 = doc(db, "profilepages", doc.id);
+                //     await updateDoc(postRef3, {
+                //         "profileinfos": profileinfos.map((propostItem) =>
+                //             propostItem.uid === po.uid
+                //                 ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
+                //                 : propostItem
+                //         ),
+                //     });
+                //
+                // });
 
-                await updateDoc(postRef2, {
-                    "profileinfos": profilepost.map((propostItem) =>
-                        propostItem.text === po.text
-                            ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
-                            : propostItem
-                    ),
-                });
+
+                // await updateDoc(postRef2, {
+                //     "profileinfos": profilepost.map((propostItem) =>
+                //         propostItem.uid === po.uid
+                //             ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
+                //             : propostItem
+                //     ),
+                // });
             }
 
         } catch (error) {
@@ -185,6 +204,7 @@ function HomePage(props) {
             console.error("Error deleting post:");
         }
     };
+
     const handlesubmit = async ()=>{
         setUniqot(uuid())
         if(uniqot==="")
@@ -244,6 +264,7 @@ function HomePage(props) {
                                     senderId:curruser.uid,
                                     displayName: curruser.displayName,
                                     text:text,
+                                    count:0,
                                     liked: false,
                                     img:downloadURL,
                                     photoURL: curruser.photoURL,
@@ -287,12 +308,37 @@ function HomePage(props) {
             setFileot(null)
         }
     }
+    const handleprofile=()=>{
+        nav('/profile')
+    }
+    const handleSearch = async (po) => {
+        try {
+            const q = query(collection(db, 'users'), where("displayName", "==", po.displayName));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                querySnapshot.forEach((doc) => {
+                    setUser(doc.data());
+                });
+
+                // Reset error state if user is found
+            }
+            console.log(user)
+            if(user)
+            {
+                dispatch({type:"CHANGE_USER",payload:user})
+                nav('/profilefriends')
+            }
+        } catch (error) {
+            console.error('Error during search:', error);
+        }
+    }
     return (
         <div className='homepage'>
            <div className="borderhomepage">
                <div className='homepage2'>
                    <div className='spanslika'>
-                       <img src={curruser.photoURL} className='searchimg'/>
+                       <img src={curruser.photoURL} onClick={handleprofile} className='searchimg'/>
                        <span><b>{curruser.displayName}</b></span>
                    </div>
                    <input type='text' placeholder='Write a post' onChange={(e)=>{setText(e.target.value)}} value={text}/>
@@ -307,7 +353,7 @@ function HomePage(props) {
                 <div className="borderhomepage2" key={po.uid}>
                     <div className="postdetails">
                         <div className="spanslika">
-                            <img src={po.photoURL} className='searchimg'/>
+                            <img src={po.photoURL} onClick={()=>handleSearch(po)} className='searchimg'/>
                         </div>
                         <div className="datenname">
                             <span><b>{po.displayName}</b></span>
