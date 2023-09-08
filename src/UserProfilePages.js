@@ -1,15 +1,69 @@
 import React, {useContext, useEffect, useState} from 'react';
 import Add3 from './image/Testot.png';
 import {AuthContext} from "./context/AuthContext";
-import {arrayRemove, doc, onSnapshot, updateDoc} from "firebase/firestore";
+import {
+    arrayRemove,
+    collection, deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    setDoc,
+    updateDoc,
+    where
+} from "firebase/firestore";
 import {db} from "./firebase";
 import moment from "moment/moment";
 
 function UserProfilePage(props) {
     const {curruser}=useContext(AuthContext)
     const [profilepost, setProfilepost] = useState([]);
+    const [likesarray, setLikesarray] = useState([]);
+
     const [post, setPost] = useState([]);
     const [likeStatus, setLikeStatus] = useState({});
+    useEffect(() => {
+        try {
+            const updateLikes = async () => {
+                for (const postche of post) {
+                    try {
+                        const res = await getDoc(doc(db, "likes", postche.uid + curruser.uid));
+                        if (!res.exists()) {
+                            await setDoc(doc(db, "likes", postche.uid + curruser.uid), {
+                                uid: curruser.uid,
+                                liked: false,
+                                text: postche.text,
+                                id: postche.uid
+                            });
+                        }
+                    } catch (error) {
+                        console.log("Error updating likes:", error);
+                    }
+                }
+            };
+            updateLikes();
+        } catch (err) {
+            console.log("Tuka e problemot");
+        }
+    }, [curruser.uid, post]);
+    useEffect(() => {
+        try {
+            const likesCollectionRef = collection(db, "likes");
+            const unsub = onSnapshot(likesCollectionRef, (querySnapshot) => {
+                const likesojArray = [];
+                querySnapshot.forEach((doc) => {
+                    likesojArray.push(doc.data());
+                });
+                setLikesarray(likesojArray);
+            });
+            return () => {
+                unsub();
+            };
+        } catch (err) {
+            console.log("Error in useEffect:", err);
+        }
+    }, []);
     useEffect(() => {
         try {
             const unsub = onSnapshot(doc(db, "posts", "homepagepostovi"), (doc) => {
@@ -35,68 +89,88 @@ function UserProfilePage(props) {
         }
     }, []);
     const handledelete = async (po) => {
-        const postRef = doc(db, "posts", "homepagepostovi");
-        const profileRef = doc(db, "profilepages", curruser.uid);
-        let itemtoremove=null
+        const postRef = doc(db, "posts", "homepagepostovi"); // Reference to the document containing the post collection
+
+
+        const profileRef = doc(db, "profilepages", curruser.uid); // Reference to the document containing the profileinfos collection
+
+        let itemtoremove = null;
 
         try {
             // Remove the element from both collections
-            await updateDoc(profileRef, {
-                "profileinfos": arrayRemove(po)
+            await updateDoc(postRef, {
+                "postovi": arrayRemove(po)
             });
 
-            post.filter((pro)=>(
-                pro.text===po.text
-            )).map((pro)=>(
-                    itemtoremove=pro
+            profilepost.filter((pro) => (
+                pro.text === po.text
+            )).map((pro) => (
+                    itemtoremove = pro
                 )
-            )
-            await updateDoc(postRef, {
-                postovi: arrayRemove(itemtoremove)
-            })
+            );
+            await updateDoc(profileRef, {
+                profileinfos: arrayRemove(itemtoremove)
+            });
 
-        } catch (error) {
-            console.error("Error deleting post:", error);
+            const likesCollectionRef = collection(db, "likes");
+            const q = query(likesCollectionRef, where("id", "==", po.uid));
+
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach(async (docSnapshot) => {
+                const docRef = doc(db, "likes", docSnapshot.id);
+                console.log(docSnapshot.id)
+                console.log("Deleting docRef:", docRef);
+
+                await deleteDoc(docRef);
+            });
+
+            console.log("Documents deleted successfully.");
+        } catch {
+            console.error("Error deleting post:");
         }
-    }
-    const handlelikes = async (po) => {
+    };
+    const handleLikes = async (po) => {
         const postRef = doc(db, "posts", "homepagepostovi");
+
         const postRef2 = doc(db, "profilepages", curruser.uid);
         try {
-            // Toggle the like/unlike status for the specific post
-            const updatedLikeStatus = { ...likeStatus };
-            if (!updatedLikeStatus[po.uid]) {
-                // If it's not liked, mark as liked
-                updatedLikeStatus[po.uid] = true;
-            } else {
-                // If it's liked, mark as unliked
-                updatedLikeStatus[po.uid] = false;
+            const docRef = doc(db, 'likes', po.uid+curruser.uid); // Replace 'uniqot' with the document ID you want to fetch
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                let currentUserLikeStatus = data.liked;
+                console.log('Current Like Status:', currentUserLikeStatus);
+                await updateDoc(docRef, {
+                    liked:!currentUserLikeStatus
+                });
+                currentUserLikeStatus = data.liked;
+                console.log('Updated Like Status:', currentUserLikeStatus);
+                console.log(likesarray)
+                console.log("po.uid:", po.uid);
+                let debook = likesarray.find((book) => book.id === po.uid && book.uid === curruser.uid);
+                console.log("debook:", debook);
+                await updateDoc(postRef, {
+                    "postovi": post.map((postItem) =>
+                        postItem.uid === po.uid
+                            ? { ...postItem, count: (postItem.count || 0) + (debook.liked ? -1 : 1), }
+                            : postItem
+                    ),
+                });
+
+                await updateDoc(postRef2, {
+                    "profileinfos": profilepost.map((propostItem) =>
+                        propostItem.text === po.text
+                            ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
+                            : propostItem
+                    ),
+                });
             }
 
-            // Update the Firestore document
-            await updateDoc(postRef, {
-                "postovi": post.map((postItem) =>
-                    postItem.text === po.text
-                        ? { ...postItem, count: (postItem.count || 0) + (updatedLikeStatus[po.uid] ? 1 : -1) }
-                        : postItem
-                ),
-            });
-            await updateDoc(postRef2, {
-                "profileinfos": profilepost.map((propostItem) =>
-                    propostItem.text === po.text
-                        ? { ...propostItem, count: (propostItem.count || 0) + (updatedLikeStatus[po.uid] ? 1 : -1) }
-                        : propostItem
-                ),
-            });
-
-
-            // Update the local state to reflect the new like/unlike status
-            setLikeStatus(updatedLikeStatus);
-
         } catch (error) {
-            console.error("Error updating likes:", error);
+            console.error('Error updating likes:', error);
         }
-    }
+    };
     return (
         <div className='userprofilepage'>
             <div className="background">
@@ -118,8 +192,15 @@ function UserProfilePage(props) {
                         {pro.text}
                         {pro.img && <img src={pro.img} alt="Posted Image" className='postimage'/>}
                         <div className="postbutton">
-                            {!likeStatus[pro.uid] && <button onClick={() => handlelikes(pro)}>Like</button>}
-                            {likeStatus[pro.uid] && <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handlelikes(pro)}>Unlike</button>}
+                            {likesarray.some((book) => book.id === pro.uid) ? (
+                                likesarray.find((book) => book.id === pro.uid && book.uid===curruser.uid)?.liked ? (
+                                    <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handleLikes(pro)}>Unlike</button>
+                                ) : (
+                                    <button onClick={() => handleLikes(pro)}>Like</button>
+                                )
+                            ) : (
+                                <button onClick={() => handleLikes(pro)}>Like</button>
+                            )}
                             <span>Likes: {pro.count}</span>
                             {pro.senderId===curruser.uid && <button onClick={()=>handledelete(pro)}>Delete</button>}
                         </div>
