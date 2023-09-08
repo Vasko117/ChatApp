@@ -99,18 +99,17 @@ function FriendsProfilePages(props) {
 
         try {
             // Remove the element from both collections
-            await updateDoc(postRef, {
-                "postovi": arrayRemove(po)
+            await updateDoc(profileRef, {
+                "profileinfos": arrayRemove(po)
             });
-
-            profilepost.filter((pro) => (
-                pro.text === po.text
+            post.filter((pro) => (
+                pro.uid === po.uid
             )).map((pro) => (
                     itemtoremove = pro
                 )
             );
-            await updateDoc(profileRef, {
-                profileinfos: arrayRemove(itemtoremove)
+            await updateDoc(postRef, {
+                postovi: arrayRemove(itemtoremove)
             });
 
             const likesCollectionRef = collection(db, "likes");

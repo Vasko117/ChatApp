@@ -125,25 +125,46 @@ function HomePage(props) {
                             : postItem
                     ),
                 });
-                // const profileQuery = query(collection(db, 'profilepages'),where("profileinfos", "array-contains", { uid: po.uid }));
-                // const querySnapshot = await getDocs(profileQuery);
-                // if (querySnapshot.empty) {
-                //     console.log("No documents found matching the query.");
-                // }
-                // console.log("VLaga")
-                // querySnapshot.forEach(async (doc) => {
-                //     console.log("VLaga2")
-                //     const profileinfos = doc.data().profileinfos;
-                //     const postRef3 = doc(db, "profilepages", doc.id);
-                //     await updateDoc(postRef3, {
-                //         "profileinfos": profileinfos.map((propostItem) =>
-                //             propostItem.uid === po.uid
-                //                 ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
-                //                 : propostItem
-                //         ),
-                //     });
-                //
-                // });
+                let dali=false
+                let idto=""
+                const profileQuery = collection(db, 'profilepages');
+                onSnapshot(profileQuery, (querySnapshot) => {
+                    querySnapshot.forEach(async (docsnapshot) => {
+                        const profileinfos = docsnapshot.data().profileinfos;
+                        profileinfos.map(prost=>{
+                            if(prost.uid===po.uid)
+                            {
+                                console.log("GO najde")
+                                dali=true
+                                idto=docsnapshot.id;
+                                console.log(dali)
+                                console.log(idto)
+                                console.log(prost.uid)
+                            }
+                        })
+                    });
+                });
+
+                setTimeout(async () => {
+                    if (dali) {
+                        console.log("VLAGA")
+                        const postRef3 = doc(db, "profilepages", idto);
+                        const docSnapshot = await getDoc(postRef3);
+
+                        if (docSnapshot.exists()) {
+                            console.log("VLAGA")
+                            const data = docSnapshot.data();
+                            const profileinfos = data.profileinfos;
+                            await updateDoc(postRef3, {
+                                "profileinfos": profileinfos.map((propostItem) =>
+                                    propostItem.uid === po.uid
+                                        ? {...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1)}
+                                        : propostItem
+                                ),
+                            });
+                        }
+                    }
+                },1000)
 
 
                 // await updateDoc(postRef2, {
