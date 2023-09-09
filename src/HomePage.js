@@ -165,15 +165,6 @@ function HomePage(props) {
                         }
                     }
                 },1000)
-
-
-                // await updateDoc(postRef2, {
-                //     "profileinfos": profilepost.map((propostItem) =>
-                //         propostItem.uid === po.uid
-                //             ? { ...propostItem, count: (propostItem.count || 0) + (debook.liked ? -1 : 1), }
-                //             : propostItem
-                //     ),
-                // });
             }
 
         } catch (error) {

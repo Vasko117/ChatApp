@@ -12,7 +12,7 @@ code {
   monospace;
 }
 .formContainer{
-  background-color: aqua;
+  background-color: #019992;
   justify-content: center;
   height: 100vh;
   display: flex;
@@ -87,7 +87,7 @@ code {
   font-size: 12px;
 }
 .logink{
-  background-color: aqua;
+  background-color: #019992;
   justify-content: center;
   height: 100vh;
   display: flex;
@@ -145,7 +145,7 @@ code {
   width: 100px;
 }
 .home{
-  background-color: aqua;
+  background-color: #019992;
   height: 100vh;
   display: flex;
   align-items: center;
@@ -184,7 +184,7 @@ code {
 }
 .homepage{
   flex-basis: 75%;
-  background-color: #10c55f;
+  background-color: #44EE77;
   border-bottom-left-radius: 7px;
   border: 1px solid gray;
   border-top-left-radius: 7px;
@@ -382,13 +382,12 @@ code {
   overflow-y: scroll;
 }
 
-.texts::-webkit-scrollbar{
-  width: 10px;
-}
 .texts::-webkit-scrollbar-track {
   background-color: #f2f2f2; /* Background color of the scrollbar track */
 }
-
+.texts::-webkit-scrollbar {
+  width: 0; /* Hide the scrollbar */
+}
 .texts::-webkit-scrollbar-thumb {
   background-color: #888; /* Color of the scrollbar thumb */
 }
@@ -513,7 +512,7 @@ div.chatot.owner p{
   margin-top: 10px;
 }
 .homepage::-webkit-scrollbar{
-  width: 10px;
+  width: 0;
 }
 .homepage::-webkit-scrollbar-track {
   background-color: #f2f2f2; /* Background color of the scrollbar track */
@@ -562,8 +561,9 @@ div.chatot.owner p{
   overflow-y: scroll;
 }
 .userprofilepage::-webkit-scrollbar{
-  width: 10px;
+  width: 0;
 }
+
 .userprofilepage::-webkit-scrollbar-track {
   background-color: #f2f2f2; /* Background color of the scrollbar track */
 }
