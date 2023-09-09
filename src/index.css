@@ -596,3 +596,6 @@ div.chatot.owner p{
   object-fit: cover;
 
 }
+button:hover{
+  background-color: #d0e1da;
+}

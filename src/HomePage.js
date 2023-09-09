@@ -358,7 +358,7 @@ function HomePage(props) {
                    <label htmlFor='file'>
                        <img id='adnigo' src={Add} alt='' className='fileinputhomepage' />
                    </label>
-                   <button onClick={handlesubmit}>Post</button>
+                   <button onClick={handlesubmit} >Post</button>
                </div>
            </div>
             {post && post.sort((b,a)=>a.date-b.date).map((po)=>(
