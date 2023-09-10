@@ -14,7 +14,7 @@ function Navbar(props) {
     }
     return (
         <div className='navbar'>
-            <span className='navbarot' onClick={()=>{nav('/')}}>Chat app</span>
+            <span className='navbarot' onClick={()=>{nav('/')}}>DialogDynamo</span>
             <div className='user'>
                 <img src={curruser.photoURL} alt='' className='imageuser' onClick={handlesubmit}/>
                 <span>{curruser.displayName}</span>

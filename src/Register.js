@@ -99,7 +99,7 @@ function Register(props) {
     return (
         <div className='formContainer'>
             <div className='form-wrapper'>
-                <h1 className='logo'>Chat app</h1>
+                <h1 className='logo'>DialogDynamo</h1>
                 <h2 className='register'>Register</h2>
                 <form onSubmit={handlesubmit}>
                     <input type='text' placeholder='display name' />

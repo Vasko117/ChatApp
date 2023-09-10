@@ -9,15 +9,20 @@ import {
     getDocs,
     onSnapshot,
     query,
-    setDoc,
+    setDoc, Timestamp,
     updateDoc,
     where
 } from "firebase/firestore";
-import {db} from "./firebase";
+import {db, storage} from "./firebase";
 import moment from "moment/moment";
+import Add from "./image/addAvatar.png";
+import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
+import {v4 as uuid} from "uuid";
 
 function UserProfilePage(props) {
+    const [reply, setReply] = useState('');
     const {curruser}=useContext(AuthContext)
+    const [novfile, setNovfile] = useState(null);
     const [profilepost, setProfilepost] = useState([]);
     const [likesarray, setLikesarray] = useState([]);
 
@@ -169,6 +174,211 @@ function UserProfilePage(props) {
             console.error('Error updating likes:', error);
         }
     };
+    const handlereplys= async(po)=> {
+        const postRef2 = doc(db, "profilepages", curruser.uid);
+        await updateDoc(postRef2, {
+            "profileinfos": profilepost.map((propostItem) =>
+                propostItem.uid === po.uid
+                    ? {...propostItem, liked: true}
+                    : propostItem
+            ),
+        });
+
+    }
+
+    const handlesend= async(po)=> {
+        if(!reply && !novfile)
+        {
+            console.log("Kurtashak")
+            const postRef = doc(db, "profilepages", curruser.uid);
+            await updateDoc(postRef, {
+                "profileinfos": post.map((propostItem) =>
+                    propostItem.uid === po.uid
+                        ? {...propostItem, liked: false}
+                        : propostItem
+                ),
+            });
+            return
+        }
+        const postRef2 = doc(db, "posts", "homepagepostovi");
+        const postRef3 = doc(db, "profilepages", curruser.uid);
+
+        try {
+            if(!novfile)
+            {
+                if(reply)
+                {
+                    const postDoc = await getDoc(postRef2);
+                    if (postDoc.exists()) {
+                        const postData = postDoc.data();
+                        const updatedPostovi = postData.postovi.map((propostItem) => {
+                            if (propostItem.uid === po.uid) {
+                                // Initialize replyArray if it doesn't exist
+                                const replyArray = propostItem.replyArray || [];
+
+                                // Modify the post with the new reply
+                                const updatedReplyArray = [
+                                    ...replyArray,
+                                    {
+                                        senderId: curruser.uid,
+                                        displayName: curruser.displayName,
+                                        text: reply,
+                                        photoURL: curruser.photoURL,
+                                        date: Timestamp.now(),
+                                    },
+                                ];
+
+                                return {
+                                    ...propostItem,
+                                    liked: false,
+                                    replyArray: updatedReplyArray,
+                                };
+                            }
+                            return propostItem;
+                        });
+
+                        // Update the document with the modified postovi array
+                        await updateDoc(postRef2, { postovi: updatedPostovi });
+                    }
+                    const postDoc2 = await getDoc(postRef3);
+                    if (postDoc2.exists()) {
+                        const postData = postDoc2.data();
+                        const updatedPostovi = postData.profileinfos.map((propostItem) => {
+                            if (propostItem.uid === po.uid) {
+                                // Initialize replyArray if it doesn't exist
+                                const replyArray = propostItem.replyArray || [];
+
+                                // Modify the post with the new reply
+                                const updatedReplyArray = [
+                                    ...replyArray,
+                                    {
+                                        senderId: curruser.uid,
+                                        displayName: curruser.displayName,
+                                        text: reply,
+                                        photoURL: curruser.photoURL,
+                                        date: Timestamp.now(),
+                                    },
+                                ];
+
+                                return {
+                                    ...propostItem,
+                                    liked: false,
+                                    replyArray: updatedReplyArray,
+                                };
+                            }
+                            return propostItem;
+                        });
+
+                        // Update the document with the modified postovi array
+                        await updateDoc(postRef3, { profileinfos: updatedPostovi });
+                    }
+                    setReply('')
+                }
+
+            }
+            if(novfile)
+            {
+                console.log("FILEOT@POSTOIIII")
+                const storageRef = ref(storage, uuid());
+                const uploadTask = uploadBytesResumable(storageRef, novfile);
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {},
+                    (error) => {
+                        console.error('Error uploading file:', error);
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            const postDoc = await getDoc(postRef2);
+                            if (postDoc.exists()) {
+                                const postData = postDoc.data();
+                                const updatedPostovi = postData.postovi.map((propostItem) => {
+                                    if (propostItem.uid === po.uid) {
+                                        // Initialize replyArray if it doesn't exist
+                                        const replyArray = propostItem.replyArray || [];
+
+                                        // Modify the post with the new reply
+                                        const updatedReplyArray = [
+                                            ...replyArray,
+                                            {
+                                                senderId: curruser.uid,
+                                                displayName: curruser.displayName,
+                                                text: reply,
+                                                img:downloadURL,
+                                                photoURL: curruser.photoURL,
+                                                date: Timestamp.now(),
+                                            },
+                                        ];
+
+                                        return {
+                                            ...propostItem,
+                                            liked: false,
+                                            replyArray: updatedReplyArray,
+                                        };
+                                    }
+                                    return propostItem;
+                                });
+
+                                // Update the document with the modified postovi array
+                                await updateDoc(postRef2, { postovi: updatedPostovi });
+                            }
+                            const postDoc2 = await getDoc(postRef3);
+                            if (postDoc2.exists()) {
+                                const postData = postDoc2.data();
+                                const updatedPostovi = postData.profileinfos.map((propostItem) => {
+                                    if (propostItem.uid === po.uid) {
+                                        // Initialize replyArray if it doesn't exist
+                                        const replyArray = propostItem.replyArray || [];
+
+                                        // Modify the post with the new reply
+                                        const updatedReplyArray = [
+                                            ...replyArray,
+                                            {
+                                                senderId: curruser.uid,
+                                                displayName: curruser.displayName,
+                                                text: reply,
+                                                img:downloadURL,
+                                                photoURL: curruser.photoURL,
+                                                date: Timestamp.now(),
+                                            },
+                                        ];
+
+                                        return {
+                                            ...propostItem,
+                                            liked: false,
+                                            replyArray: updatedReplyArray,
+                                        };
+                                    }
+                                    return propostItem;
+                                });
+
+                                // Update the document with the modified postovi array
+                                await updateDoc(postRef3, { profileinfos: updatedPostovi });
+                            }
+                            setReply('')
+                            setNovfile(null);
+                        } catch (uploadError) {
+                            console.error('Error during download URL or Firestore update:', uploadError);
+                        }
+                    }
+                );
+            }
+        } catch (error) {
+            console.error("Error updating postovi:", error);
+        }
+    }
+
+    const handlecancel=async (po) => {
+        const postRef = doc(db, "profilepages", curruser.uid);
+        await updateDoc(postRef, {
+            "profileinfos": profilepost.map((propostItem) =>
+                propostItem.uid === po.uid
+                    ? {...propostItem, liked: false}
+                    : propostItem
+            ),
+        });
+    }
     return (
         <div className='userprofilepage'>
             <div className="background">
@@ -190,9 +400,12 @@ function UserProfilePage(props) {
                         {pro.text}
                         {pro.img && <img src={pro.img} alt="Posted Image" className='postimage'/>}
                         <div className="postbutton">
+                            <div className="dolen">
+
+                            </div>
                             {likesarray.some((book) => book.id === pro.uid) ? (
                                 likesarray.find((book) => book.id === pro.uid && book.uid===curruser.uid)?.liked ? (
-                                    <button style={{ backgroundColor: 'blue', color: 'white' }} onClick={() => handleLikes(pro)}>Unlike</button>
+                                    <button style={{ backgroundColor: 'green', color: 'white' }} onClick={() => handleLikes(pro)}>Unlike</button>
                                 ) : (
                                     <button onClick={() => handleLikes(pro)}>Like</button>
                                 )
@@ -201,7 +414,35 @@ function UserProfilePage(props) {
                             )}
                             <span>Likes: {pro.count}</span>
                             {pro.senderId===curruser.uid && <button onClick={()=>handledelete(pro)}>Delete</button>}
+                            <button onClick={()=>handlereplys(pro)}>Reply</button>
+                            <div className="dolen">
+
+                            </div>
+                            {pro.liked &&
+                                <div className="postreply">
+                                    <div className='spanslika'>
+                                        <img src={curruser.photoURL}  className='searchimg2'/>
+                                    </div>
+                                    <input type='text' placeholder='Reply' onChange={(e)=>{setReply(e.target.value)}} value={reply}/>
+                                    <input style={{display:"none"}} type='file' id='file2' onChange={(e)=>{setNovfile(e.target.files[0])}} />
+                                    <label htmlFor='file2'>
+                                        <img id='adnigo' src={Add} alt='' className='fileinputhomepage' />
+                                    </label>
+                                    <button onClick={()=>handlecancel(pro)} >Cancel</button>
+                                    <button onClick={()=>handlesend(pro)} >Send</button>
+                                </div> }
                         </div>
+                        {pro.replyArray && pro.replyArray.sort((b,a)=>a.date-b.date).reverse().map(rep=>(
+                            <div className="replyot">
+                                <img src={rep.photoURL} className='searchimg2'/>
+                                <div className="chatbubble">
+                                    <span><b>{rep.displayName}</b></span>
+                                    {rep.text && <p>{rep.text}</p>}
+                                    {rep.img && <img src={rep.img} alt="Image" className='postimage2'/>}
+                                    <span className='datereply'>{moment(rep.date.toDate()).calendar()}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                 </div>

@@ -37,7 +37,7 @@ function Login(props) {
     return (
         <div className='logink'>
             <div className='loginkwrapper'>
-                <h1 className='logo'>Chat app</h1>
+                <h1 className='logo'>DialogDynamo</h1>
                 <h2 className='register'>Login</h2>
                 <form onSubmit={handlesubmit}>
                     <input type='email' placeholder='email'/>
