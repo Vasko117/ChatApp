@@ -19,8 +19,10 @@ import {ChatContext} from "./context/ChatContext";
 import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {v4 as uuid} from "uuid";
 import Add from "./image/addAvatar.png";
+import {useNavigate} from "react-router-dom";
 
 function FriendsProfilePages(props) {
+    const nav=useNavigate()
     const {curruser}=useContext(AuthContext)
     const [profilepost, setProfilepost] = useState([]);
     const [likesarray, setLikesarray] = useState([]);
@@ -28,6 +30,8 @@ function FriendsProfilePages(props) {
     const [post, setPost] = useState([]);
     const [reply, setReply] = useState('');
     const [novfile, setNovfile] = useState(null);
+    const {dispatch}=useContext(ChatContext)
+    const [user, setUser] = useState(null);
     useEffect(() => {
         try {
             const updateLikes = async () => {
@@ -92,7 +96,7 @@ function FriendsProfilePages(props) {
         } catch (err) {
             console.log("Tuka e problemot");
         }
-    }, []);
+    }, [user]);
     const handledelete = async (po) => {
         const postRef = doc(db, "posts", "homepagepostovi"); // Reference to the document containing the post collection
 
@@ -380,6 +384,28 @@ function FriendsProfilePages(props) {
             ),
         });
     }
+    const handleSearch = async (po) => {
+        try {
+            const q = query(collection(db, 'users'), where("displayName", "==", po.displayName));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                querySnapshot.forEach((doc) => {
+                    setUser(doc.data());
+                });
+
+                // Reset error state if user is found
+            }
+            console.log(user)
+            if(user)
+            {
+                dispatch({type:"CHANGE_USER",payload:user})
+                nav('/profilefriends')
+            }
+        } catch (error) {
+            console.error('Error during search:', error);
+        }
+    }
     return (
         <div className='userprofilepage'>
             <div className="background">
@@ -435,7 +461,7 @@ function FriendsProfilePages(props) {
                         </div>
                         {pro.replyArray && pro.replyArray.sort((b,a)=>a.date-b.date).reverse().map(rep=>(
                             <div className="replyot">
-                                <img src={rep.photoURL} className='searchimg2'/>
+                                <img src={rep.photoURL}  onClick={()=>handleSearch(rep)} className='searchimg2'/>
                                 <div className="chatbubble">
                                     <span><b>{rep.displayName}</b></span>
                                     {rep.text && <p>{rep.text}</p>}

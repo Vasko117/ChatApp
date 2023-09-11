@@ -678,7 +678,7 @@ function HomePage(props) {
                         </div>
                         {po.replyArray && po.replyArray.sort((b,a)=>a.date-b.date).reverse().map(rep=>(
                             <div className="replyot">
-                                <img src={rep.photoURL} className='searchimg2'/>
+                                <img src={rep.photoURL} onClick={()=>handleSearch(rep)} className='searchimg2'/>
                                 <div className="chatbubble">
                                     <span><b>{rep.displayName}</b></span>
                                     {rep.text && <p>{rep.text}</p>}

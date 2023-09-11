@@ -6,12 +6,16 @@ import Messages from "../../untitled19/src/Messages";
 import Input from "../../untitled19/src/Input";
 import Texts from "../../untitled19/src/Texts";
 import {ChatContext} from "./context/ChatContext";
+import {collection, getDocs, query, where} from "firebase/firestore";
+import {db} from "./firebase";
+import {useNavigate} from "react-router-dom";
 function Chats(props) {
     const {data} = useContext(ChatContext);
+    const nav=useNavigate()
     return (
         <div className='chat'>
             <div className="chatinfo">
-                <span>{data.user?.displayName}</span>
+                <span onClick={()=>nav('/profilefriends')}>{data.user?.displayName}</span>
                 <div className="chatIcons">
                     <img src={Cam}/>
                     <img src={Add}/>

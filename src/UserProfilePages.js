@@ -18,14 +18,18 @@ import moment from "moment/moment";
 import Add from "./image/addAvatar.png";
 import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {v4 as uuid} from "uuid";
+import {ChatContext} from "./context/ChatContext";
+import {useNavigate} from "react-router-dom";
 
 function UserProfilePage(props) {
+    const nav=useNavigate()
     const [reply, setReply] = useState('');
     const {curruser}=useContext(AuthContext)
     const [novfile, setNovfile] = useState(null);
     const [profilepost, setProfilepost] = useState([]);
     const [likesarray, setLikesarray] = useState([]);
-
+    const {dispatch}=useContext(ChatContext)
+    const [user, setUser] = useState(null);
     const [post, setPost] = useState([]);
     useEffect(() => {
         try {
@@ -379,6 +383,28 @@ function UserProfilePage(props) {
             ),
         });
     }
+    const handleSearch = async (po) => {
+        try {
+            const q = query(collection(db, 'users'), where("displayName", "==", po.displayName));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                querySnapshot.forEach((doc) => {
+                    setUser(doc.data());
+                });
+
+                // Reset error state if user is found
+            }
+            console.log(user)
+            if(user)
+            {
+                dispatch({type:"CHANGE_USER",payload:user})
+                nav('/profilefriends')
+            }
+        } catch (error) {
+            console.error('Error during search:', error);
+        }
+    }
     return (
         <div className='userprofilepage'>
             <div className="background">
@@ -434,7 +460,7 @@ function UserProfilePage(props) {
                         </div>
                         {pro.replyArray && pro.replyArray.sort((b,a)=>a.date-b.date).reverse().map(rep=>(
                             <div className="replyot">
-                                <img src={rep.photoURL} className='searchimg2'/>
+                                <img src={rep.photoURL}  onClick={()=>handleSearch(rep)} className='searchimg2'/>
                                 <div className="chatbubble">
                                     <span><b>{rep.displayName}</b></span>
                                     {rep.text && <p>{rep.text}</p>}

@@ -344,6 +344,7 @@ code {
 }
 .chatinfo span{
   font-weight: bold;
+  cursor: pointer;
 }
 
 .inputot{
