@@ -648,7 +648,7 @@ function HomePage(props) {
                             </div>
                             {likesarray.some((book) => book.id === po.uid) ? (
                                 likesarray.find((book) => book.id === po.uid && book.uid===curruser.uid)?.liked ? (
-                                    <button style={{ backgroundColor: 'green', color: 'white' }} onClick={() => handleLikes(po)}>Unlike</button>
+                                    <button style={{ backgroundColor: '#457373', color: 'white' }} onClick={() => handleLikes(po)}>Unlike</button>
                                 ) : (
                                     <button onClick={() => handleLikes(po)}>Like</button>
                                 )

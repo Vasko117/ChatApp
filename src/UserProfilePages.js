@@ -431,7 +431,7 @@ function UserProfilePage(props) {
                             </div>
                             {likesarray.some((book) => book.id === pro.uid) ? (
                                 likesarray.find((book) => book.id === pro.uid && book.uid===curruser.uid)?.liked ? (
-                                    <button style={{ backgroundColor: 'green', color: 'white' }} onClick={() => handleLikes(pro)}>Unlike</button>
+                                    <button style={{ backgroundColor: '#457373', color: 'white' }} onClick={() => handleLikes(pro)}>Unlike</button>
                                 ) : (
                                     <button onClick={() => handleLikes(pro)}>Like</button>
                                 )
