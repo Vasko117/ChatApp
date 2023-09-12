@@ -1,4 +1,4 @@
-## DialogDynamo - Chat Application Documentation
+## DialogDynamo - Chat Website Documentation
 
 ### Overview:
 
